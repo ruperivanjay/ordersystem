@@ -1,123 +1,445 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Ordering System - Classic Version</title>
-    <!-- CSS Link Removed as requested -->
-    <style>
-        /* Basic layout styling to keep the page readable without the CSS file */
-        body { font-family: sans-serif; padding: 20px; }
-        .container { display: flex; gap: 20px; }
-        .panel { border: 1px solid #ccc; padding: 15px; flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-        .item-card { border: 1px solid #bbb; padding: 10px; cursor: pointer; text-align: center; }
-        .item-card:hover { background: #f0f0f0; }
-    </style>
+    <meta charset="UTF-8">
+    <title>Ordering System</title>
+    <style>
+        /* Base Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f7; min-height: 100vh; color: #1f2937; }
+
+        .navbar {
+            background: #4f46e5; color: white;
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { font-size: 18px; font-weight: 600; }
+        .back-btn {
+            background: rgba(255,255,255,0.2); border: none;
+            color: white; padding: 0.5rem 1rem;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            text-decoration: none; transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Summary cards */
+        .summary-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .card {
+            background: white; border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card-label { font-size: 12px; color: #6b7280; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.025em; }
+        .card-value { font-size: 24px; font-weight: 700; color: #111827; }
+        .card-value.blue  { color: #4f46e5; }
+        .card-value.green { color: #10b981; }
+        .card-value.amber { color: #f59e0b; }
+
+        /* Order layout */
+        .order-layout {
+            display: grid; grid-template-columns: 1fr 380px;
+            gap: 1.5rem; margin-bottom: 2rem;
+        }
+
+        .panel {
+            background: white; border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .panel h3 {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 1.25rem; color: #111827;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        /* Item picker */
+        .item-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem; max-height: 450px; overflow-y: auto; padding-right: 5px;
+        }
+        .item-card {
+            border: 1px solid #e5e7eb; border-radius: 10px;
+            padding: 1rem; cursor: pointer; transition: all 0.2s;
+            background: white;
+        }
+        .item-card:hover { border-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        /* Out of Stock Styling */
+        .item-card.out-of-stock {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #fecdd3;
+            background: #fff1f2;
+        }
+        .item-card.out-of-stock:hover { transform: none; box-shadow: none; border-color: #fecdd3; }
+
+        .item-card-name { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+        .item-card-price { font-size: 13px; color: #4b5563; }
+        .item-card-cat {
+            font-size: 10px; padding: 2px 6px; 
+            border-radius: 4px; background: #f3f4f6; color: #4b5563;
+        }
+
+        /* Cart */
+        .cart-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; font-size: 14px;
+        }
+        .cart-item:last-child { border-bottom: none; }
+        .cart-qty { display: flex; align-items: center; gap: 0.5rem; }
+        .qty-btn {
+            width: 24px; height: 24px; border-radius: 6px;
+            border: 1px solid #d1d5db; background: white;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .qty-btn:hover { background: #f9fafb; border-color: #9ca3af; }
+
+        /* Table */
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f9fafb; padding: 1rem; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+        td { padding: 1rem; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
+        
+        /* Badges */
+        .badge { padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-completed { background: #d1fae5; color: #065f46; }
+        .badge-cancelled { background: #fee2e2; color: #991b1b; }
+
+        .action-btn { padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid #e5e7eb; background: white; transition: all 0.2s; }
+        .btn-pay { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+        .btn-pay:hover { background: #d1fae5; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 0.4rem; color: #374151; }
+        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+        
+        .place-order-btn {
+            width: 100%; padding: 0.8rem; background: #4f46e5; color: white;
+            border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;
+        }
+        .place-order-btn:hover { background: #4338ca; }
+
+        #message {
+            position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+            border-radius: 8px; color: white; font-size: 14px; z-index: 1000; display: none;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .msg-success { background: #10b981; display: block !important; }
+        .msg-error { background: #ef4444; display: block !important; }
+    </style>
 </head>
 <body>
 
-    <h1>Ordering System</h1>
-    <p>Logged in as: <span id="nav-user"></span> | <a th:href="@{/dashboard}">Back to Menu</a></p>
+<div id="message"></div>
 
-    <div class="container">
-        <!-- Left Panel: Products -->
-        <div class="panel">
-            <h3>Products</h3>
-            <div class="item-grid" id="itemGrid">
-                <!-- Products will load here -->
-            </div>
-        </div>
+<div class="navbar">
+    <h1>Ordering System</h1>
+    <div style="display:flex;align-items:center;gap:1.5rem;">
+        <span id="nav-user" style="font-size:13px; opacity:0.9; font-weight: 500;"></span>
+        <a href="/dashboard" class="back-btn">← Back to Menu</a>
+    </div>
+</div>
 
-        <!-- Right Panel: Cart -->
-        <div class="panel">
-            <h3>Your Cart</h3>
-            <div id="cartItems">
-                <p>Select an item to start.</p>
-            </div>
-            <hr>
-            <p>Total: <strong id="totalDisplay">₱0.00</strong></p>
-            <button onclick="processCheckout()">Process Checkout</button>
-        </div>
-    </div>
+<div class="container">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="card">
+            <div class="card-label">Total Orders</div>
+            <div class="card-value blue" id="totalOrders">0</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Completed</div>
+            <div class="card-value green" id="completedOrders">0</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Pending</div>
+            <div class="card-value amber" id="pendingOrders">0</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Total Sales</div>
+            <div class="card-value" id="totalSales">₱0.00</div>
+        </div>
+    </div>
 
-    <h3>Recent Orders</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody id="orderTableBody">
-            <!-- Orders will load here -->
-        </tbody>
-    </table>
+    <div class="order-layout">
+        <div class="panel">
+            <h3>Select Items</h3>
+            <div class="form-group">
+                <input type="text" placeholder="Search products..." oninput="filterItems(this.value)" />
+            </div>
+            <div class="item-grid" id="itemGrid"></div>
+        </div>
 
-    <!-- AUTHENTICATION SCRIPT -->
-    <script th:src="@{/js/auth.js}"></script>
+        <div class="panel">
+            <h3>Current Cart</h3>
+            <div id="cartItems">
+                <div style="text-align:center; padding:2rem; color:#9ca3af; font-size:14px;">Your cart is empty</div>
+            </div>
 
-    <!-- INTERNAL LOGIC (REVERTED FROM order-logic.js) -->
-    <script>
-        // Runs immediately on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if(typeof requireLogin === 'function' && requireLogin()) {
-                const user = getCurrentUser();
-                document.getElementById('nav-user').textContent = user ? (user.sub || user.username) : 'User';
-                
-                fetchItems();
-                fetchOrders();
-            }
-        });
+            <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #f3f4f6;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:14px;">
+                    <span>Subtotal</span>
+                    <span id="subtotalDisplay">₱0.00</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:14px; align-items:center;">
+                    <span>Discount (₱)</span>
+                    <input type="number" id="discountInput" value="0" min="0" style="width:70px; text-align:right; padding:2px 5px;" oninput="updateSummary()"/>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:18px; color:#111827; margin-top:0.5rem;">
+                    <span>Total</span>
+                    <span id="totalDisplay">₱0.00</span>
+                </div>
+            </div>
 
-        async function fetchItems() {
-            try {
-                const response = await fetch('/api/products', {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-                });
-                const items = await response.json();
-                const grid = document.getElementById('itemGrid');
-                
-                grid.innerHTML = items.map(item => `
-                    <div class="item-card" onclick="alert('Added ' + '${item.name}')">
-                        <strong>${item.name}</strong><br>
-                        ₱${item.price.toFixed(2)}
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error("Failed to load products", err);
-            }
-        }
+            <div style="margin-top:1.5rem;">
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Enter name..." />
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="Cash">Cash</option>
+                        <option value="GCash">GCash</option>
+                        <option value="Card">Credit/Debit Card</option>
+                    </select>
+                </div>
+            </div>
+            <button class="place-order-btn" onclick="placeOrder()">Process Checkout</button>
+        </div>
+    </div>
 
-        async function fetchOrders() {
-            try {
-                const response = await fetch('/api/orders', {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-                });
-                const orders = await response.json();
-                const tbody = document.getElementById('orderTableBody');
-                
-                tbody.innerHTML = orders.map(o => `
-                    <tr>
-                        <td>#${o.id}</td>
-                        <td>${o.customerName}</td>
-                        <td>₱${o.totalAmount.toFixed(2)}</td>
-                        <td>${o.status}</td>
-                        <td>${new Date(o.orderDate).toLocaleDateString()}</td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error("Failed to load orders", err);
-            }
-        }
+    <h3 style="margin-bottom:1rem; font-size:18px;">Recent Orders</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="orderTableBody"></tbody>
+        </table>
+    </div>
+</div>
 
-        function processCheckout() {
-            alert("Checkout logic reverted to simple alert.");
-        }
-    </script>
+<script src="/js/auth.js"></script>
+<script>
+    if (typeof requireLogin === "function") requireLogin();
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    if (user) {
+        document.getElementById('nav-user').textContent = `${user.sub} (${user.role || 'User'})`;
+    }
+
+    let allItems = [];
+    let cart = [];
+
+    window.onload = async () => {
+        await loadItems();
+        await loadOrders();
+    };
+
+    async function loadItems() {
+        try {
+            const res = await fetch('/api/items');
+            allItems = await res.json();
+            renderItemGrid(allItems);
+        } catch (e) { console.error("Error loading items", e); }
+    }
+
+    function renderItemGrid(items) {
+        const grid = document.getElementById('itemGrid');
+        grid.innerHTML = items.length === 0 ? '<div style="grid-column:1/-1; text-align:center; color:#9ca3af;">No items found.</div>' : 
+            items.map(item => {
+                const outOfStock = item.quantity <= 0;
+                return `
+                    <div class="item-card ${outOfStock ? 'out-of-stock' : ''}" 
+                         onclick="${outOfStock ? '' : 'addToCart(' + item.id + ')'}">
+                        <div class="item-card-name">${item.name}</div>
+                        <div class="item-card-price">₱${item.price.toFixed(2)}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                            <span class="item-card-cat">${item.category}</span>
+                            ${outOfStock ? '<span style="font-size:11px;color:#dc2626;font-weight:600">Out of stock</span>' : 
+                            '<span style="font-size:11px;color:#059669;font-weight:500">Stock: ' + item.quantity + '</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+    }
+
+    function filterItems(q) {
+        const filtered = allItems.filter(i => i.name.toLowerCase().includes(q.toLowerCase()));
+        renderItemGrid(filtered);
+    }
+
+    function addToCart(itemId) {
+        const item = allItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        if (item.quantity <= 0) {
+            showMessage('Sorry, ' + item.name + ' is out of stock!', 'error');
+            return;
+        }
+
+        const existing = cart.find(c => c.itemId === itemId);
+        const currentQty = existing ? existing.quantity : 0;
+
+        if (currentQty + 1 > item.quantity) {
+            showMessage('Sorry, only ' + item.quantity + ' ' + item.name + ' available!', 'error');
+            return;
+        }
+
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cart.push({ itemId: item.id, itemName: item.name, itemPrice: item.price, quantity: 1 });
+        }
+        renderCart();
+    }
+
+    // UPDATED changeQty: Respects stock limit
+    function changeQty(itemId, delta) {
+        const idx = cart.findIndex(c => c.itemId === itemId);
+        if (idx === -1) return;
+
+        const item = allItems.find(i => i.id === itemId);
+        const newQty = cart[idx].quantity + delta;
+
+        if (delta > 0 && item && newQty > item.quantity) {
+            showMessage('Only ' + item.quantity + ' ' + item.name + ' in stock!', 'error');
+            return;
+        }
+
+        cart[idx].quantity = newQty;
+        if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+        renderCart();
+    }
+
+    function renderCart() {
+        const div = document.getElementById('cartItems');
+        if (cart.length === 0) {
+            div.innerHTML = '<div style="text-align:center; padding:2rem; color:#9ca3af; font-size:14px;">Your cart is empty</div>';
+        } else {
+            div.innerHTML = cart.map(c => `
+                <div class="cart-item">
+                    <div style="flex:1">
+                        <div style="font-weight:500">${c.itemName}</div>
+                        <div style="font-size:12px; color:#6b7280">₱${c.itemPrice.toFixed(2)} each</div>
+                    </div>
+                    <div class="cart-qty">
+                        <button class="qty-btn" onclick="changeQty(${c.itemId}, -1)">-</button>
+                        <span style="width:20px; text-align:center">${c.quantity}</span>
+                        <button class="qty-btn" onclick="changeQty(${c.itemId}, 1)">+</button>
+                    </div>
+                    <div style="width:70px; text-align:right; font-weight:500">₱${(c.itemPrice * c.quantity).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const subtotal = cart.reduce((s, c) => s + (c.itemPrice * c.quantity), 0);
+        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+        const total = Math.max(0, subtotal - discount);
+        document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('totalDisplay').textContent = '₱' + total.toLocaleString(undefined, {minimumFractionDigits: 2});
+    }
+
+    async function placeOrder() {
+        if (cart.length === 0) return showMessage('Please add items to the cart first.', 'error');
+        const customerName = document.getElementById('customerName').value.trim();
+        if (!customerName) return showMessage('Please enter customer name.', 'error');
+
+        const body = {
+            customerName,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            discount: parseFloat(document.getElementById('discountInput').value) || 0,
+            orderItems: cart.map(c => ({
+                itemName: c.itemName, itemPrice: c.itemPrice, 
+                quantity: c.quantity, subtotal: c.itemPrice * c.quantity
+            }))
+        };
+
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                const order = await res.json();
+                cart = []; renderCart();
+                document.getElementById('customerName').value = '';
+                document.getElementById('discountInput').value = '0';
+                await loadItems(); await loadOrders();
+                showMessage('Order #' + order.orderNumber + ' placed! Stock updated.', 'success');
+            } else {
+                const err = await res.json();
+                showMessage(err.message || 'Failed to place order.', 'error');
+            }
+        } catch(err) { showMessage('Connection error.', 'error'); }
+    }
+
+    async function loadOrders() {
+        try {
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            renderOrderTable(orders);
+            updateDashboard(orders);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderOrderTable(orders) {
+        document.getElementById('orderTableBody').innerHTML = orders.slice(0, 10).map(o => `
+            <tr>
+                <td style="font-weight:600">#${o.orderNumber}</td>
+                <td>${o.customerName}</td>
+                <td>${o.orderItems.length} items</td>
+                <td>₱${o.finalAmount.toFixed(2)}</td>
+                <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
+                <td style="color:#6b7280; font-size:12px">${new Date(o.orderDate).toLocaleDateString()}</td>
+                <td>${o.status === 'PENDING' ? `<button class="action-btn btn-pay" onclick="completeOrder(${o.id})">Complete</button>` : '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function completeOrder(id) {
+        await fetch(`/api/orders/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'COMPLETED' })
+        });
+        loadOrders();
+    }
+
+    function updateDashboard(orders) {
+        document.getElementById('totalOrders').textContent = orders.length;
+        document.getElementById('completedOrders').textContent = orders.filter(o => o.status === 'COMPLETED').length;
+        document.getElementById('pendingOrders').textContent = orders.filter(o => o.status === 'PENDING').length;
+        const total = orders.filter(o => o.status === 'COMPLETED').reduce((s, o) => s + o.finalAmount, 0);
+        document.getElementById('totalSales').textContent = '₱' + total.toLocaleString();
+    }
+
+    function showMessage(text, type) {
+        const msg = document.getElementById('message');
+        msg.textContent = text;
+        msg.className = type === 'success' ? 'msg-success' : 'msg-error';
+        setTimeout(() => { msg.style.display = 'none'; }, 3000);
+    }
+</script>
 </body>
 </html>
