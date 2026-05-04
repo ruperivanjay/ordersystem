@@ -3,289 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <title>Ordering System</title>
-    <!-- Removes the favicon 404 error without needing a file -->
     <link rel="icon" href="data:,">
-    
     <style>
-        /* MODERN GLASSMORPHISM DESIGN - Integrated directly */
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --accent-green: #00d2ad;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--primary-gradient);
-            color: white;
-            min-height: 100vh;
-        }
-
-        .navbar {
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            padding: 1rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
+        :root { --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.2); }
+        body { margin: 0; font-family: sans-serif; background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; min-height: 100vh; }
+        .navbar { background: rgba(0,0,0,0.3); padding: 1rem 5%; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
         .container { padding: 2rem 5%; }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            padding: 1.5rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        .order-layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-        }
-
-        .panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 2rem;
-        }
-
-        .item-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .item-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .item-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.2);
-            color: white;
-            box-sizing: border-box;
-        }
-
-        .process-btn {
-            width: 100%;
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 1.5rem;
-        }
-
-        .btn-done {
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { text-align: left; padding: 12px; border-bottom: 1px solid var(--glass-border); opacity: 0.7; }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            background: rgba(255, 255, 255, 0.1);
-        }
+        .panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .item-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
+        .item-card:hover { border-color: #00d2ad; background: rgba(255,255,255,0.1); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid var(--border); background: #000; color: #fff; }
+        button { background: #00d2ad; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body>
-
-<div class="navbar">
-    <h2>Ordering System</h2>
-    <div>
-        <span id="nav-user"></span>
-        <a th:href="@{/dashboard}" style="color: var(--accent-green); margin-left: 15px; text-decoration: none;">← Back to Menu</a>
-    </div>
-</div>
-
-<div class="container">
-    <div class="summary-cards">
-        <div class="card">Total Orders <h2 id="totalOrdersCount">0</h2></div>
-        <div class="card">Total Sales <h2 id="totalSalesAmount">₱0.00</h2></div>
+    <div class="navbar">
+        <h2>Ordering System</h2>
+        <a th:href="@{/dashboard}" style="color: #00d2ad; text-decoration: none;">← Back</a>
     </div>
 
-    <div class="order-layout">
+    <div class="container">
         <div class="panel">
             <h3>Select Items</h3>
-            <div class="item-grid" id="itemGrid">
-                <!-- Products will load here -->
-            </div>
+            <div id="itemGrid" class="item-grid"></div>
         </div>
 
         <div class="panel">
             <h3>Checkout</h3>
-            <div id="cartStatus">Select an item to set price</div>
             <input type="text" id="custName" placeholder="Customer Name">
-            <input type="number" id="orderTotal" placeholder="Total Amount (₱)" readonly>
-            <button class="process-btn" onclick="placeOrder()">Process Checkout</button>
+            <input type="number" id="orderTotal" placeholder="Total Amount" readonly>
+            <button onclick="placeOrder()">Process Order</button>
+        </div>
+
+        <div class="panel">
+            <h3>Recent Orders</h3>
+            <table>
+                <thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="orderTableBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <div class="panel" style="margin-top: 2rem;">
-        <h3>Recent Orders</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="orderTableBody">
-                <!-- Orders will load here -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Only keep auth.js as it handles your login logic -->
-<script th:src="@{/js/auth.js}"></script>
-
-<script>
-    // 1. Define functions first to avoid "ReferenceError"
-    async function fetchItems() {
-        try {
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // INTERNAL FUNCTIONS - Resolves the ReferenceError immediately
+        async function fetchItems() {
             const res = await fetch('/api/products');
             const items = await res.json();
-            const grid = document.getElementById('itemGrid');
-            grid.innerHTML = items.map(i => `
-                <div class="item-card" onclick="selectProduct('${i.name}', ${i.price})">
+            document.getElementById('itemGrid').innerHTML = items.map(i => `
+                <div class="item-card" onclick="document.getElementById('orderTotal').value=${i.price}">
                     <strong>${i.name}</strong><br>₱${i.price.toFixed(2)}
                 </div>
             `).join('');
-        } catch (err) { console.error("Failed to load products", err); }
-    }
+        }
 
-    function selectProduct(name, price) {
-        document.getElementById('orderTotal').value = price;
-        document.getElementById('cartStatus').textContent = "Selected: " + name;
-    }
-
-    async function fetchOrders() {
-        try {
+        async function fetchOrders() {
             const res = await fetch('/api/orders');
             const orders = await res.json();
-            const table = document.getElementById('orderTableBody');
-            
-            table.innerHTML = orders.map(o => `
+            document.getElementById('orderTableBody').innerHTML = orders.map(o => `
                 <tr>
                     <td>#${o.id}</td>
-                    <td>${o.customerName || 'Walk-in'}</td>
+                    <td>${o.customerName || 'Guest'}</td>
                     <td>₱${o.totalAmount.toFixed(2)}</td>
-                    <td><span class="status-badge">${o.status}</span></td>
-                    <td>
-                        ${o.status !== 'Completed' ? 
-                            `<button class="btn-done" onclick="updateStatus(${o.id}, 'Completed')">Done</button>` : 
-                            '✅'}
-                    </td>
+                    <td>${o.status}</td>
+                    <td><button style="width:auto; padding:5px 10px;" onclick="updateStatus(${o.id})">Done</button></td>
                 </tr>
             `).join('');
-            
-            // Update Summary
-            document.getElementById('totalOrdersCount').textContent = orders.length;
-            const total = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-            document.getElementById('totalSalesAmount').textContent = "₱" + total.toFixed(2);
-        } catch (err) { console.error("Failed to load orders", err); }
-    }
-
-    async function placeOrder() {
-        const name = document.getElementById('custName').value;
-        const amount = document.getElementById('orderTotal').value;
-
-        if(!name || !amount) {
-            alert("Please enter customer name and select a product.");
-            return;
         }
 
-        const orderData = {
-            customerName: name,
-            totalAmount: parseFloat(amount),
-            status: 'Pending'
-        };
+        async function placeOrder() {
+            const data = {
+                customerName: document.getElementById('custName').value,
+                totalAmount: parseFloat(document.getElementById('orderTotal').value),
+                status: 'Pending'
+            };
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            fetchOrders();
+        }
 
-        const res = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
+        async function updateStatus(id) {
+            await fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: 'Completed' })
+            });
+            fetchOrders();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchItems();
+            fetchOrders();
         });
-
-        if (res.ok) {
-            alert('Order Successfully Processed!');
-            document.getElementById('custName').value = '';
-            document.getElementById('orderTotal').value = '';
-            fetchOrders(); // Refresh table
-        }
-    }
-
-    async function updateStatus(id, newStatus) {
-        // Connects to your @PutMapping("/orders/{id}/status")
-        const res = await fetch(`/api/orders/${id}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-
-        if (res.ok) fetchOrders();
-    }
-
-    // 2. Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("System initializing...");
-        // Handle user display from auth.js
-        if (typeof getCurrentUser === 'function') {
-            const user = getCurrentUser();
-            const navSpan = document.getElementById('nav-user');
-            if (navSpan) navSpan.textContent = user ? (user.sub || user.username) : 'User';
-        }
-        
-        fetchItems();
-        fetchOrders();
-    });
-</script>
+    </script>
 </body>
 </html>
