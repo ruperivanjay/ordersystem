@@ -1,48 +1,62 @@
-package com.ordering.system.controller;
+package com.example.demo.controller;
 
-import com.ordering.system.entity.Order;
-import com.ordering.system.entity.Product;
-import com.ordering.system.service.OrderService;
-import com.ordering.system.service.ProductService;
+import com.example.demo.model.Order;
+import com.example.demo.model.Product;
+import com.example.demo.repository.OrderRepository;
+import com.example.demo.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
-@Controller
-@CrossOrigin(origins = "*")
+@RestController
+@RequestMapping("/api")
 public class OrderController {
 
-    private final OrderService orderService;
-    private final ProductService productService;
+    @Autowired
+    private ProductRepository productRepository;
 
-    public OrderController(OrderService orderService, ProductService productService) {
-        this.orderService = orderService;
-        this.productService = productService;
+    @Autowired
+    private OrderRepository orderRepository;
+
+    /**
+     * Retrieves all products to populate the 'Select Items' grid.
+     */
+    @GetMapping("/products")
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
     }
 
-    @GetMapping("/ordering-system")
-    public String orderingSystemPage() {
-        return "ordering-system";
+    /**
+     * Retrieves all orders for the 'Recent Orders' table.
+     */
+    @GetMapping("/orders")
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 
-    @GetMapping("/api/products")
-    @ResponseBody
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    /**
+     * Saves a new order coming from the checkout form.
+     */
+    @PostMapping("/orders")
+    public ResponseEntity<Order> placeOrder(@RequestBody Order order) {
+        try {
+            Order savedOrder = orderRepository.save(order);
+            return ResponseEntity.ok(savedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    @GetMapping("/api/orders")
-    @ResponseBody
-    public ResponseEntity<List<Order>> getAllOrders() {
-        return ResponseEntity.ok(orderService.getAllOrders());
-    }
-
-    @PutMapping("/api/orders/{id}/status")
-    @ResponseBody
-    public ResponseEntity<Order> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(orderService.updateStatus(id, body.get("status")));
+    /**
+     * Simple status update for the 'Done' button in your table.
+     */
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long id, @RequestBody Order statusUpdate) {
+        return orderRepository.findById(id).map(order -> {
+            order.setStatus(statusUpdate.getStatus());
+            return ResponseEntity.ok(orderRepository.save(order));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }
