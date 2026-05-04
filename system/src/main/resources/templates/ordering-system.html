@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Ordering System</title>
+    <!-- Silences favicon 404 without a new file -->
+    <link rel="icon" href="data:,">
+    
     <style>
-        /* GLASSMORPHISM DESIGN */
+        /* GLASSMORPHISM DESIGN RESTORED */
         :root {
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
@@ -13,7 +16,7 @@
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--primary-gradient);
             color: white;
             min-height: 100vh;
@@ -44,6 +47,7 @@
             border: 1px solid var(--glass-border);
             padding: 1.5rem;
             border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         .order-layout {
@@ -74,6 +78,22 @@
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
         }
 
         .process-btn {
@@ -89,7 +109,7 @@
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { text-align: left; padding: 12px; border-bottom: 1px solid var(--glass-border); }
+        th { text-align: left; padding: 12px; border-bottom: 1px solid var(--glass-border); opacity: 0.7; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
@@ -114,6 +134,7 @@
     <div class="order-layout">
         <div class="panel">
             <h3>Select Items</h3>
+            <input type="text" placeholder="Search products..." id="searchInput">
             <div class="item-grid" id="itemGrid"></div>
         </div>
 
@@ -122,6 +143,7 @@
             <div id="cartItems"></div>
             <div style="margin-top: 20px;">
                 <p>Total: <span id="totalDisplay" style="font-size: 1.5rem; font-weight: bold;">₱0.00</span></p>
+                <input type="text" id="customerName" placeholder="Customer Name">
                 <button class="process-btn" onclick="processCheckout()">Process Checkout</button>
             </div>
         </div>
@@ -144,19 +166,15 @@
     </div>
 </div>
 
-<!-- Only auth.js remains external as it is shared across pages -->
 <script th:src="@{/js/auth.js}"></script>
-
 <script>
-    // SELF-CONTAINED LOGIC
+    // INTERNAL LOGIC - Resolves ReferenceError
     document.addEventListener('DOMContentLoaded', () => {
-        // Ensure auth logic exists
         if(typeof requireLogin === 'function' && requireLogin()) {
             const user = getCurrentUser();
-            const navSpan = document.getElementById('nav-user');
-            if(navSpan) navSpan.textContent = user ? (user.sub || user.username) : 'User';
-            
-            // Call internal functions
+            if(document.getElementById('nav-user')) {
+                document.getElementById('nav-user').textContent = user ? (user.sub || user.username) : 'User';
+            }
             fetchItems();
             fetchOrders();
         }
@@ -170,12 +188,12 @@
             const items = await response.json();
             const grid = document.getElementById('itemGrid');
             grid.innerHTML = items.map(item => `
-                <div class="item-card" onclick="alert('Selected: ${item.name}')">
+                <div class="item-card" onclick="alert('Added to cart: ${item.name}')">
                     <strong>${item.name}</strong><br>
                     ₱${item.price.toFixed(2)}
                 </div>
             `).join('');
-        } catch (err) { console.error("Error loading items:", err); }
+        } catch (err) { console.error("Error loading products:", err); }
     }
 
     async function fetchOrders() {
@@ -184,8 +202,7 @@
                 headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
             });
             const orders = await response.json();
-            const tbody = document.getElementById('orderTableBody');
-            tbody.innerHTML = orders.map(o => `
+            document.getElementById('orderTableBody').innerHTML = orders.map(o => `
                 <tr>
                     <td>#${o.id}</td>
                     <td>${o.customerName || 'Guest'}</td>
@@ -197,7 +214,7 @@
         } catch (err) { console.error("Error loading orders:", err); }
     }
 
-    function processCheckout() { alert("Checkout initialized!"); }
+    function processCheckout() { alert("Process Checkout Clicked!"); }
 </script>
 </body>
 </html>
