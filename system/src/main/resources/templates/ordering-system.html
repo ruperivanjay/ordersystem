@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Ordering System</title>
-    <!-- Silences favicon 404 error without adding a file to GitHub -->
+    <!-- Removes the favicon 404 error without needing a file -->
     <link rel="icon" href="data:,">
     
     <style>
-        /* GLASSMORPHISM DESIGN */
+        /* MODERN GLASSMORPHISM DESIGN - Integrated directly */
         :root {
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
             --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --accent-green: #00d2ad;
         }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--primary-gradient);
             color: white;
             min-height: 100vh;
@@ -78,7 +79,7 @@
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.2s;
         }
 
         .item-card:hover {
@@ -86,19 +87,20 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 10px;
-            margin-top: 5px;
+            margin-top: 10px;
             border-radius: 8px;
             border: 1px solid var(--glass-border);
             background: rgba(0, 0, 0, 0.2);
             color: white;
+            box-sizing: border-box;
         }
 
         .process-btn {
             width: 100%;
-            background: #00d2ad;
+            background: var(--accent-green);
             color: white;
             border: none;
             padding: 1rem;
@@ -108,9 +110,25 @@
             margin-top: 1.5rem;
         }
 
+        .btn-done {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th { text-align: left; padding: 12px; border-bottom: 1px solid var(--glass-border); opacity: 0.7; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -119,33 +137,30 @@
     <h2>Ordering System</h2>
     <div>
         <span id="nav-user"></span>
-        <a th:href="@{/dashboard}" style="color: #00d2ad; margin-left: 15px; text-decoration: none;">← Back to Menu</a>
+        <a th:href="@{/dashboard}" style="color: var(--accent-green); margin-left: 15px; text-decoration: none;">← Back to Menu</a>
     </div>
 </div>
 
 <div class="container">
     <div class="summary-cards">
-        <div class="card">Total Orders <h2 id="totalOrders">0</h2></div>
-        <div class="card">Completed <h2 id="completedOrders">0</h2></div>
-        <div class="card">Pending <h2 id="pendingOrders">0</h2></div>
-        <div class="card">Total Sales <h2 id="totalSales">₱0.00</h2></div>
+        <div class="card">Total Orders <h2 id="totalOrdersCount">0</h2></div>
+        <div class="card">Total Sales <h2 id="totalSalesAmount">₱0.00</h2></div>
     </div>
 
     <div class="order-layout">
         <div class="panel">
             <h3>Select Items</h3>
-            <input type="text" placeholder="Search products..." id="searchInput">
-            <div class="item-grid" id="itemGrid"></div>
+            <div class="item-grid" id="itemGrid">
+                <!-- Products will load here -->
+            </div>
         </div>
 
         <div class="panel">
-            <h3>Current Cart</h3>
-            <div id="cartItems"></div>
-            <div style="margin-top: 20px;">
-                <p>Total: <span id="totalDisplay" style="font-size: 1.5rem; font-weight: bold;">₱0.00</span></p>
-                <input type="text" id="customerName" placeholder="Customer Name">
-                <button class="process-btn" onclick="processCheckout()">Process Checkout</button>
-            </div>
+            <h3>Checkout</h3>
+            <div id="cartStatus">Select an item to set price</div>
+            <input type="text" id="custName" placeholder="Customer Name">
+            <input type="number" id="orderTotal" placeholder="Total Amount (₱)" readonly>
+            <button class="process-btn" onclick="placeOrder()">Process Checkout</button>
         </div>
     </div>
 
@@ -154,69 +169,123 @@
         <table>
             <thead>
                 <tr>
-                    <th>Order #</th>
+                    <th>ID</th>
                     <th>Customer</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Date</th>
+                    <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="orderTableBody"></tbody>
+            <tbody id="orderTableBody">
+                <!-- Orders will load here -->
+            </tbody>
         </table>
     </div>
 </div>
 
-<!-- Only auth.js remains external -->
+<!-- Only keep auth.js as it handles your login logic -->
 <script th:src="@{/js/auth.js}"></script>
 
 <script>
-    // INTERNAL LOGIC - Resolves the ReferenceError from image_65715f.png
-    document.addEventListener('DOMContentLoaded', () => {
-        if(typeof requireLogin === 'function' && requireLogin()) {
-            const user = getCurrentUser();
-            const navSpan = document.getElementById('nav-user');
-            if(navSpan) navSpan.textContent = user ? (user.sub || user.username) : 'User';
-            
-            fetchItems();
-            fetchOrders();
-        }
-    });
-
+    // 1. Define functions first to avoid "ReferenceError"
     async function fetchItems() {
         try {
-            const response = await fetch('/api/products', {
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-            });
-            const items = await response.json();
+            const res = await fetch('/api/products');
+            const items = await res.json();
             const grid = document.getElementById('itemGrid');
-            grid.innerHTML = items.map(item => `
-                <div class="item-card" onclick="alert('Added: ${item.name}')">
-                    <strong>${item.name}</strong><br>
-                    ₱${item.price.toFixed(2)}
+            grid.innerHTML = items.map(i => `
+                <div class="item-card" onclick="selectProduct('${i.name}', ${i.price})">
+                    <strong>${i.name}</strong><br>₱${i.price.toFixed(2)}
                 </div>
             `).join('');
-        } catch (err) { console.error("Load products failed:", err); }
+        } catch (err) { console.error("Failed to load products", err); }
+    }
+
+    function selectProduct(name, price) {
+        document.getElementById('orderTotal').value = price;
+        document.getElementById('cartStatus').textContent = "Selected: " + name;
     }
 
     async function fetchOrders() {
         try {
-            const response = await fetch('/api/orders', {
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-            });
-            const orders = await response.json();
-            document.getElementById('orderTableBody').innerHTML = orders.map(o => `
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            const table = document.getElementById('orderTableBody');
+            
+            table.innerHTML = orders.map(o => `
                 <tr>
                     <td>#${o.id}</td>
-                    <td>${o.customerName || 'Guest'}</td>
+                    <td>${o.customerName || 'Walk-in'}</td>
                     <td>₱${o.totalAmount.toFixed(2)}</td>
-                    <td>${o.status}</td>
-                    <td>${new Date(o.orderDate).toLocaleDateString()}</td>
+                    <td><span class="status-badge">${o.status}</span></td>
+                    <td>
+                        ${o.status !== 'Completed' ? 
+                            `<button class="btn-done" onclick="updateStatus(${o.id}, 'Completed')">Done</button>` : 
+                            '✅'}
+                    </td>
                 </tr>
             `).join('');
-        } catch (err) { console.error("Load orders failed:", err); }
+            
+            // Update Summary
+            document.getElementById('totalOrdersCount').textContent = orders.length;
+            const total = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+            document.getElementById('totalSalesAmount').textContent = "₱" + total.toFixed(2);
+        } catch (err) { console.error("Failed to load orders", err); }
     }
 
-    function processCheckout() { alert("Checkout Logic Reverted."); }
+    async function placeOrder() {
+        const name = document.getElementById('custName').value;
+        const amount = document.getElementById('orderTotal').value;
+
+        if(!name || !amount) {
+            alert("Please enter customer name and select a product.");
+            return;
+        }
+
+        const orderData = {
+            customerName: name,
+            totalAmount: parseFloat(amount),
+            status: 'Pending'
+        };
+
+        const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+
+        if (res.ok) {
+            alert('Order Successfully Processed!');
+            document.getElementById('custName').value = '';
+            document.getElementById('orderTotal').value = '';
+            fetchOrders(); // Refresh table
+        }
+    }
+
+    async function updateStatus(id, newStatus) {
+        // Connects to your @PutMapping("/orders/{id}/status")
+        const res = await fetch(`/api/orders/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) fetchOrders();
+    }
+
+    // 2. Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("System initializing...");
+        // Handle user display from auth.js
+        if (typeof getCurrentUser === 'function') {
+            const user = getCurrentUser();
+            const navSpan = document.getElementById('nav-user');
+            if (navSpan) navSpan.textContent = user ? (user.sub || user.username) : 'User';
+        }
+        
+        fetchItems();
+        fetchOrders();
+    });
 </script>
 </body>
 </html>
