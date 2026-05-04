@@ -2,139 +2,122 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Ordering System</title>
-    <!-- Links to your CSS for the cinematic/glassmorphism design -->
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Ordering System - Classic Version</title>
+    <!-- CSS Link Removed as requested -->
+    <style>
+        /* Basic layout styling to keep the page readable without the CSS file */
+        body { font-family: sans-serif; padding: 20px; }
+        .container { display: flex; gap: 20px; }
+        .panel { border: 1px solid #ccc; padding: 15px; flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .item-card { border: 1px solid #bbb; padding: 10px; cursor: pointer; text-align: center; }
+        .item-card:hover { background: #f0f0f0; }
+    </style>
 </head>
 <body>
 
-<!-- Notification container -->
-<div id="message"></div>
-
-<div class="navbar">
     <h1>Ordering System</h1>
-    <div style="display:flex;align-items:center;gap:1.5rem;">
-        <span id="nav-user" style="font-size:13px; opacity:0.9; font-weight: 500;"></span>
-        <a th:href="@{/dashboard}" class="back-btn">← Back to Menu</a>
-    </div>
-</div>
+    <p>Logged in as: <span id="nav-user"></span> | <a th:href="@{/dashboard}">Back to Menu</a></p>
 
-<div class="container">
-    <!-- Summary Cards Section -->
-    <div class="summary-cards">
-        <div class="card blue">
-            <div class="card-label">Total Orders</div>
-            <div class="card-value" id="totalOrders">0</div>
-        </div>
-        <div class="card green">
-            <div class="card-label">Completed</div>
-            <div class="card-value" id="completedOrders">0</div>
-        </div>
-        <div class="card amber">
-            <div class="card-label">Pending</div>
-            <div class="card-value" id="pendingOrders">0</div>
-        </div>
-        <div class="card">
-            <div class="card-label">Total Sales</div>
-            <div class="card-value" id="totalSales">₱0.00</div>
-        </div>
-    </div>
-
-    <!-- Main Ordering Layout -->
-    <div class="order-layout">
-        <!-- Left Panel: Product Selection -->
+    <div class="container">
+        <!-- Left Panel: Products -->
         <div class="panel">
-            <h3>Select Items</h3>
-            <div class="form-group">
-                <input type="text" id="searchInput" placeholder="Search products..." oninput="filterItems()" />
+            <h3>Products</h3>
+            <div class="item-grid" id="itemGrid">
+                <!-- Products will load here -->
             </div>
-            <!-- Data from window.fetchItems() is injected here -->
-            <div class="item-grid" id="itemGrid"></div>
         </div>
 
-        <!-- Right Panel: Current Cart -->
+        <!-- Right Panel: Cart -->
         <div class="panel">
-            <h3>Current Cart</h3>
-            <div id="cartItems"></div>
-
-            <div class="cart-summary">
-                <div class="summary-line"><span>Subtotal</span><span id="subtotalDisplay">₱0.00</span></div>
-                <div class="summary-line">
-                    <span>Discount (₱)</span>
-                    <input type="number" id="discountInput" value="0" min="0" oninput="calculateTotal()"/>
-                </div>
-                <div class="total-line"><span>Total</span><span id="totalDisplay">₱0.00</span></div>
+            <h3>Your Cart</h3>
+            <div id="cartItems">
+                <p>Select an item to start.</p>
             </div>
-
-            <div class="checkout-form">
-                <div class="form-group">
-                    <label>Customer Name</label>
-                    <input type="text" id="customerName" placeholder="Enter name..." />
-                </div>
-                <div class="form-group">
-                    <label>Payment Method</label>
-                    <select id="paymentMethod">
-                        <option value="Cash">Cash</option>
-                        <option value="GCash">GCash</option>
-                        <option value="Card">Card</option>
-                    </select>
-                </div>
-            </div>
-            <button class="place-order-btn" onclick="processCheckout()">Process Checkout</button>
+            <hr>
+            <p>Total: <strong id="totalDisplay">₱0.00</strong></p>
+            <button onclick="processCheckout()">Process Checkout</button>
         </div>
     </div>
 
-    <!-- Bottom Section: Recent Orders Table -->
-    <h3 style="margin-top:2rem; margin-bottom:1rem;">Recent Orders</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <!-- Data from window.fetchOrders() is injected here -->
-            <tbody id="orderTableBody"></tbody>
-        </table>
-    </div>
-</div>
+    <h3>Recent Orders</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="orderTableBody">
+            <!-- Orders will load here -->
+        </tbody>
+    </table>
 
-<!-- SCRIPT LOADING ORDER: CRITICAL TO FIX ReferenceError -->
-<!-- 1. Load Authentication helper first -->
-<script th:src="@{/js/auth.js}"></script>
+    <!-- AUTHENTICATION SCRIPT -->
+    <script th:src="@{/js/auth.js}"></script>
 
-<!-- 2. Load Core logic (Ensure functions inside use window. prefix) -->
-<script th:src="@{/js/order-logic.js}"></script>
-
-<!-- 3. Initialization -->
-<script>
-    // window.onload is used to ensure all scripts (like order-logic.js) are fully parsed
-    window.onload = function() {
-        console.log("HTML: Initialization started.");
-
-        if(typeof requireLogin === 'function' && requireLogin()) {
-            const user = getCurrentUser();
-            const navUser = document.getElementById('nav-user');
-            if(navUser) {
-                navUser.textContent = user ? (user.sub || user.username) : 'User';
+    <!-- INTERNAL LOGIC (REVERTED FROM order-logic.js) -->
+    <script>
+        // Runs immediately on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if(typeof requireLogin === 'function' && requireLogin()) {
+                const user = getCurrentUser();
+                document.getElementById('nav-user').textContent = user ? (user.sub || user.username) : 'User';
+                
+                fetchItems();
+                fetchOrders();
             }
-            
-            // Explicitly call from the window object to bypass scoping issues
-            if (typeof window.fetchItems === 'function') {
-                window.fetchItems();
-                window.fetchOrders();
-            } else {
-                console.error("HTML: fetchItems still not found. Check order-logic.js path or syntax.");
+        });
+
+        async function fetchItems() {
+            try {
+                const response = await fetch('/api/products', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const items = await response.json();
+                const grid = document.getElementById('itemGrid');
+                
+                grid.innerHTML = items.map(item => `
+                    <div class="item-card" onclick="alert('Added ' + '${item.name}')">
+                        <strong>${item.name}</strong><br>
+                        ₱${item.price.toFixed(2)}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Failed to load products", err);
             }
         }
-    };
-</script>
 
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/orders', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const orders = await response.json();
+                const tbody = document.getElementById('orderTableBody');
+                
+                tbody.innerHTML = orders.map(o => `
+                    <tr>
+                        <td>#${o.id}</td>
+                        <td>${o.customerName}</td>
+                        <td>₱${o.totalAmount.toFixed(2)}</td>
+                        <td>${o.status}</td>
+                        <td>${new Date(o.orderDate).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error("Failed to load orders", err);
+            }
+        }
+
+        function processCheckout() {
+            alert("Checkout logic reverted to simple alert.");
+        }
+    </script>
 </body>
 </html>
