@@ -35,18 +35,14 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(Order order) {
-
         // ===== STEP 1: Check stock for ALL items first =====
         if (order.getOrderItems() != null) {
             for (OrderItem orderItem : order.getOrderItems()) {
-
-                // Find item by name
                 Item item = itemRepository
                         .findByNameIgnoreCase(orderItem.getItemName())
                         .orElseThrow(() -> new RuntimeException(
                             "Item not found: " + orderItem.getItemName()));
 
-                // Check if enough stock
                 if (item.getQuantity() < orderItem.getQuantity()) {
                     throw new RuntimeException(
                         "Insufficient stock for: " + item.getName() +
@@ -64,23 +60,18 @@ public class OrderService {
                         .orElseThrow(() -> new RuntimeException(
                             "Item not found: " + orderItem.getItemName()));
 
-                // Deduct stock
                 item.setQuantity(item.getQuantity() - orderItem.getQuantity());
                 itemRepository.save(item);
-
-                System.out.println("Stock deducted: " + item.getName() +
-                    " | Remaining: " + item.getQuantity());
             }
         }
 
-        // ===== STEP 3: Create order =====
+        // ===== STEP 3: Create order metadata =====
         order.setOrderNumber("ORD-" + UUID.randomUUID()
                 .toString().substring(0, 8).toUpperCase());
         order.setOrderDate(LocalDateTime.now());
         order.setStatus("PENDING");
         order.setPaymentStatus("Unpaid");
 
-        // Link order items to order
         if (order.getOrderItems() != null) {
             for (OrderItem item : order.getOrderItems()) {
                 item.setOrder(order);
@@ -88,7 +79,6 @@ public class OrderService {
             }
         }
 
-        // Compute totals
         double total = order.getOrderItems() == null ? 0 :
                 order.getOrderItems().stream()
                         .mapToDouble(OrderItem::getSubtotal).sum();
@@ -102,15 +92,30 @@ public class OrderService {
     }
 
     /**
-     * Updated to handle payment status synchronization
+     * Updated to handle COMPLETED (Payment sync) and CANCELLED (Stock restoral)
      */
+    @Transactional
     public Order updateStatus(Long id, String status) {
         Order order = getOrderById(id);
+        String previousStatus = order.getStatus();
         order.setStatus(status);
 
-        // If the order is marked as COMPLETED, automatically mark it as Paid
+        // Auto-mark as Paid if completed
         if ("COMPLETED".equalsIgnoreCase(status)) {
             order.setPaymentStatus("Paid");
+        } 
+        
+        // Restore stock if the order is cancelled and wasn't already cancelled
+        else if ("CANCELLED".equalsIgnoreCase(status) && !"CANCELLED".equalsIgnoreCase(previousStatus)) {
+            if (order.getOrderItems() != null) {
+                for (OrderItem orderItem : order.getOrderItems()) {
+                    itemRepository.findByNameIgnoreCase(orderItem.getItemName()).ifPresent(item -> {
+                        item.setQuantity(item.getQuantity() + orderItem.getQuantity());
+                        itemRepository.save(item);
+                    });
+                }
+            }
+            order.setPaymentStatus("Void");
         }
 
         return orderRepository.save(order);
@@ -122,7 +127,10 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @Transactional
     public void deleteOrder(Long id) {
+        // Optional: You could add logic here to restore stock before deletion 
+        // if the order wasn't already completed or cancelled.
         orderRepository.deleteById(id);
     }
 
