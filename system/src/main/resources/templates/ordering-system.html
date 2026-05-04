@@ -4,182 +4,81 @@
     <meta charset="UTF-8">
     <title>Ordering System</title>
     <style>
-        /* Base Styles matching image_632fa2.png */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f4f7; min-height: 100vh; color: #1f2937; }
-
-        .navbar {
-            background: #1f2937; color: white;
-            padding: 1rem 2rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .navbar h1 { font-size: 18px; font-weight: 600; }
-        .back-btn {
-            color: white; font-size: 13px; text-decoration: none; opacity: 0.8;
-        }
-
+        body { font-family: "Segoe UI", sans-serif; background: #f4f4f7; color: #1f2937; }
+        .navbar { background: #1f2937; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .container { max-width: 1300px; margin: 2rem auto; padding: 0 1rem; }
-
-        /* Summary cards */
-        .summary-cards {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem; margin-bottom: 2rem;
-        }
-        .card {
-            background: white; border-radius: 8px; padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            border-left: 4px solid #e5e7eb;
-        }
-        .card.blue { border-left-color: #3b82f6; }
-        .card.green { border-left-color: #10b981; }
-        .card.amber { border-left-color: #f59e0b; }
         
-        .card-label { font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem; }
-        .card-value { font-size: 28px; font-weight: 700; color: #111827; }
+        /* Summary Cards */
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #3b82f6; }
+        .card-value { font-size: 28px; font-weight: 700; }
 
-        /* Main Layout */
-        .order-layout {
-            display: grid; grid-template-columns: 1fr 400px;
-            gap: 2rem; margin-bottom: 2rem;
-        }
-
-        .panel {
-            background: white; border-radius: 8px; padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .panel h3 { font-size: 16px; margin-bottom: 1.5rem; color: #111827; }
-
-        /* Item Selection */
-        .item-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem; max-height: 500px; overflow-y: auto;
-        }
-        .item-card {
-            border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .item-card:hover { border-color: #4f46e5; background: #f9fafb; }
-        .item-card.out-of-stock { opacity: 0.5; cursor: not-allowed; background: #f3f4f6; }
+        /* Layout */
+        .order-layout { display: grid; grid-template-columns: 1fr 400px; gap: 2rem; }
+        .panel { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        .item-name { font-weight: 600; font-size: 14px; }
-        .item-price { color: #4f46e5; font-weight: 700; margin: 4px 0; }
-        .item-stock { font-size: 11px; color: #6b7280; }
+        /* Item Grid */
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .item-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; cursor: pointer; }
+        .item-card:hover { border-color: #4f46e5; }
+        .item-card.out-of-stock { opacity: 0.5; background: #f3f4f6; cursor: not-allowed; }
 
-        /* Cart Styles */
-        .cart-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6;
-        }
-        .cart-qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { width: 24px; height: 24px; border: 1px solid #d1d5db; background: white; cursor: pointer; border-radius: 4px; }
-
-        .checkout-section { margin-top: 1.5rem; border-top: 1px dashed #d1d5db; padding-top: 1rem; }
-        .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 20px; margin: 1rem 0; }
+        .process-btn { width: 100%; padding: 1rem; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-top: 1rem; }
         
-        .input-field {
-            width: 100%; padding: 0.6rem; border: 1px solid #d1d5db;
-            border-radius: 6px; margin-bottom: 1rem; font-size: 14px;
-        }
-
-        .process-btn {
-            width: 100%; padding: 1rem; background: #10b981; color: white;
-            border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
-        }
-        .process-btn:hover { background: #059669; }
-
-        /* Table */
-        .table-container { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f9fafb; padding: 1rem; text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; }
-        td { padding: 1rem; border-top: 1px solid #f3f4f6; font-size: 14px; }
-
-        .badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 700; }
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-completed { background: #d1fae5; color: #065f46; }
-
-        #message {
-            position: fixed; top: 20px; right: 20px; padding: 1rem; border-radius: 6px;
-            color: white; z-index: 1000; display: none;
-        }
+        table { width: 100%; border-collapse: collapse; margin-top: 2rem; background: white; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #f3f4f6; }
+        .badge-completed { background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div id="message"></div>
-
 <div class="navbar">
     <h1>Ordering System</h1>
-    <div>
-        <span id="nav-user" style="margin-right: 15px; font-size: 13px;"></span>
-        <a href="/dashboard" class="back-btn">← Back to Menu</a>
-    </div>
+    <a href="/dashboard" style="color: white; text-decoration: none;">← Back to Menu</a>
 </div>
 
 <div class="container">
     <div class="summary-cards">
-        <div class="card blue"><div class="card-label">Total Orders</div><div class="card-value" id="totalOrders">0</div></div>
-        <div class="card green"><div class="card-label">Completed</div><div class="card-value" id="completedOrders">0</div></div>
-        <div class="card amber"><div class="card-label">Pending</div><div class="card-value" id="pendingOrders">0</div></div>
-        <div class="card"><div class="card-label">Total Sales</div><div class="card-value" id="totalSales">₱0.00</div></div>
+        <div class="card"><div style="font-size: 11px; color: #6b7280;">TOTAL ORDERS</div><div class="card-value" id="totalOrders">0</div></div>
+        <div class="card" style="border-left-color: #10b981;"><div style="font-size: 11px; color: #6b7280;">TOTAL SALES</div><div class="card-value" id="totalSales">₱0.00</div></div>
     </div>
 
     <div class="order-layout">
         <div class="panel">
             <h3>Select Items</h3>
-            <input type="text" class="input-field" placeholder="Search products..." oninput="filterItems(this.value)">
             <div class="item-grid" id="itemGrid"></div>
         </div>
 
         <div class="panel">
             <h3>Current Cart</h3>
-            <div id="cartItems">
-                <div style="text-align:center; padding:2rem; color:#9ca3af;">Cart is empty</div>
-            </div>
-
-            <div class="checkout-section">
-                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;">
-                    <span>Subtotal</span><span id="subtotalDisplay">₱0.00</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; align-items:center;">
-                    <span>Discount (₱)</span>
-                    <input type="number" id="discountInput" value="0" style="width:80px; text-align:right;" oninput="updateSummary()">
-                </div>
-                <div class="total-row">
+            <div id="cartItems" style="margin: 1rem 0;"></div>
+            <hr>
+            <div style="margin-top: 1rem;">
+                <div style="display:flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem;">
                     <span>Total</span><span id="totalDisplay">₱0.00</span>
                 </div>
-                
-                <input type="text" id="customerName" class="input-field" placeholder="Customer Name">
-                <select id="paymentMethod" class="input-field">
-                    <option value="Cash">Cash</option>
-                    <option value="GCash">GCash</option>
-                </select>
+                <input type="text" id="customerName" placeholder="Customer Name" style="width:100%; padding:8px; margin-top:10px;">
                 <button class="process-btn" onclick="placeOrder()">Process Checkout</button>
             </div>
         </div>
     </div>
 
-    <h3 style="margin-bottom: 1rem;">Recent Orders</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="orderTableBody"></tbody>
-        </table>
-    </div>
+    <h3>Recent Orders</h3>
+    <table>
+        <thead>
+            <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody id="orderTableBody"></tbody>
+    </table>
 </div>
 
-<script src="/js/auth.js"></script>
 <script>
     let allItems = [];
     let cart = [];
 
-    // Correcting the function name to match line 108 call in image_632fa2.png
+    // This must match the error call from your screenshot exactly
     window.onload = async () => {
-        if (typeof getCurrentUser === "function") {
-            const user = getCurrentUser();
-            if (user) document.getElementById('nav-user').textContent = user.sub;
-        }
         await fetchItems(); 
         await loadOrders();
     };
@@ -189,7 +88,7 @@
             const res = await fetch('/api/items');
             allItems = await res.json();
             renderItemGrid(allItems);
-        } catch (e) { console.error("Error loading items", e); }
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
     function renderItemGrid(items) {
@@ -197,141 +96,80 @@
         grid.innerHTML = items.map(item => `
             <div class="item-card ${item.quantity <= 0 ? 'out-of-stock' : ''}" 
                  onclick="${item.quantity > 0 ? `addToCart(${item.id})` : ''}">
-                <div class="item-name">${item.name}</div>
-                <div class="item-price">₱${item.price.toFixed(2)}</div>
-                <div class="item-stock">Stock: ${item.quantity}</div>
+                <div style="font-weight:600;">${item.name}</div>
+                <div style="color: #4f46e5; font-weight: 700;">₱${item.price.toFixed(2)}</div>
+                <div style="font-size: 12px; color: #6b7280;">Stock: ${item.quantity}</div>
             </div>
         `).join('');
-    }
-
-    function filterItems(q) {
-        const filtered = allItems.filter(i => i.name.toLowerCase().includes(q.toLowerCase()));
-        renderItemGrid(filtered);
     }
 
     function addToCart(itemId) {
         const item = allItems.find(i => i.id === itemId);
         const existing = cart.find(c => c.itemId === itemId);
         
-        // Stock limit enforcement
-        const currentInCart = existing ? existing.quantity : 0;
-        if (currentInCart + 1 > item.quantity) {
-            showToast(`Only ${item.quantity} units available!`, 'error');
+        // Stock limit check
+        const inCart = existing ? existing.quantity : 0;
+        if (inCart + 1 > item.quantity) {
+            alert("Not enough stock!");
             return;
         }
 
-        if (existing) {
-            existing.quantity++;
-        } else {
-            cart.push({ itemId: item.id, itemName: item.name, itemPrice: item.price, quantity: 1 });
-        }
-        renderCart();
-    }
-
-    function changeQty(itemId, delta) {
-        const item = allItems.find(i => i.id === itemId);
-        const cartItem = cart.find(c => c.itemId === itemId);
+        if (existing) existing.quantity++;
+        else cart.push({ itemId: item.id, itemName: item.name, itemPrice: item.price, quantity: 1 });
         
-        if (delta > 0 && cartItem.quantity + 1 > item.quantity) {
-            showToast("Stock limit reached", "error");
-            return;
-        }
-        
-        cartItem.quantity += delta;
-        if (cartItem.quantity <= 0) cart.splice(cart.indexOf(cartItem), 1);
         renderCart();
     }
 
     function renderCart() {
         const div = document.getElementById('cartItems');
-        if (cart.length === 0) {
-            div.innerHTML = '<div style="text-align:center; padding:2rem; color:#9ca3af;">Cart is empty</div>';
-        } else {
-            div.innerHTML = cart.map(c => `
-                <div class="cart-item">
-                    <div style="font-size:14px; font-weight:500;">${c.itemName}</div>
-                    <div class="cart-qty-controls">
-                        <button class="qty-btn" onclick="changeQty(${c.itemId}, -1)">-</button>
-                        <span style="font-size:14px; width:20px; text-align:center;">${c.quantity}</span>
-                        <button class="qty-btn" onclick="changeQty(${c.itemId}, 1)">+</button>
-                    </div>
-                    <div style="font-weight:600;">₱${(c.itemPrice * c.quantity).toFixed(2)}</div>
-                </div>
-            `).join('');
-        }
-        updateSummary();
-    }
-
-    function updateSummary() {
-        const subtotal = cart.reduce((s, c) => s + (c.itemPrice * c.quantity), 0);
-        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-        const total = Math.max(0, subtotal - discount);
-        document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2);
+        div.innerHTML = cart.map(c => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span>${c.itemName} (x${c.quantity})</span>
+                <span>₱${(c.itemPrice * c.quantity).toFixed(2)}</span>
+            </div>
+        `).join('');
+        const total = cart.reduce((s, c) => s + (c.itemPrice * c.quantity), 0);
         document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2);
     }
 
     async function placeOrder() {
-        const name = document.getElementById('customerName').value.trim();
-        if (!name || cart.length === 0) {
-            showToast("Please provide customer name and items", "error");
-            return;
-        }
-
-        const body = {
-            customerName: name,
-            paymentMethod: document.getElementById('paymentMethod').value,
-            discount: parseFloat(document.getElementById('discountInput').value) || 0,
-            orderItems: cart.map(c => ({
-                itemName: c.itemName, itemPrice: c.itemPrice, 
-                quantity: c.quantity, subtotal: c.itemPrice * c.quantity
-            }))
-        };
+        const name = document.getElementById('customerName').value;
+        if (!name || cart.length === 0) return alert("Fill in name and items");
 
         const res = await fetch('/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify({
+                customerName: name,
+                orderItems: cart.map(c => ({ itemName: c.itemName, itemPrice: c.itemPrice, quantity: c.quantity }))
+            })
         });
 
         if (res.ok) {
-            cart = []; renderCart();
+            cart = [];
             document.getElementById('customerName').value = '';
-            document.getElementById('discountInput').value = '0';
-            await fetchItems(); await loadOrders();
-            showToast("Order Placed Successfully!", "success");
+            await fetchItems();
+            await loadOrders();
+            renderCart();
         }
     }
 
     async function loadOrders() {
         const res = await fetch('/api/orders');
         const orders = await res.json();
+        document.getElementById('totalOrders').textContent = orders.length;
+        const sales = orders.reduce((s, o) => s + o.finalAmount, 0);
+        document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
         
-        document.getElementById('orderTableBody').innerHTML = orders.slice(0, 10).map(o => `
+        document.getElementById('orderTableBody').innerHTML = orders.map(o => `
             <tr>
-                <td style="font-weight:700;">#${o.orderNumber}</td>
+                <td>#${o.orderNumber}</td>
                 <td>${o.customerName}</td>
-                <td>${o.orderItems.length} Items</td>
                 <td>₱${o.finalAmount.toFixed(2)}</td>
-                <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
+                <td><span class="badge-completed">${o.status}</span></td>
                 <td>${new Date(o.orderDate).toLocaleDateString()}</td>
-                <td>—</td>
             </tr>
         `).join('');
-
-        // Dashboard stats
-        document.getElementById('totalOrders').textContent = orders.length;
-        document.getElementById('completedOrders').textContent = orders.filter(o => o.status === 'COMPLETED').length;
-        document.getElementById('pendingOrders').textContent = orders.filter(o => o.status === 'PENDING').length;
-        const sales = orders.filter(o => o.status === 'COMPLETED').reduce((s, o) => s + o.finalAmount, 0);
-        document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
-    }
-
-    function showToast(text, type) {
-        const msg = document.getElementById('message');
-        msg.textContent = text;
-        msg.style.display = 'block';
-        msg.style.background = type === 'success' ? '#10b981' : '#ef4444';
-        setTimeout(() => { msg.style.display = 'none'; }, 3000);
     }
 </script>
 </body>
