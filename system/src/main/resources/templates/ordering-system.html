@@ -9,33 +9,33 @@
         .navbar { background: #1f2937; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .container { max-width: 1300px; margin: 2rem auto; padding: 0 1rem; }
         
-        /* Summary Cards */
         .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #3b82f6; }
         .card-value { font-size: 28px; font-weight: 700; }
 
-        /* Layout */
         .order-layout { display: grid; grid-template-columns: 1fr 400px; gap: 2rem; }
         .panel { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* Item Grid */
         .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
-        .item-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; cursor: pointer; }
-        .item-card:hover { border-color: #4f46e5; }
+        .item-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; cursor: pointer; transition: 0.2s; }
+        .item-card:hover { border-color: #4f46e5; background: #f9fafb; }
         .item-card.out-of-stock { opacity: 0.5; background: #f3f4f6; cursor: not-allowed; }
 
+        .cart-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
         .process-btn { width: 100%; padding: 1rem; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-top: 1rem; }
+        .process-btn:hover { background: #059669; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 2rem; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 2rem; background: white; border-radius: 8px; overflow: hidden; }
         th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .badge-completed { background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        th { background: #f9fafb; font-size: 12px; color: #6b7280; text-transform: uppercase; }
+        .badge { background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
     <h1>Ordering System</h1>
-    <a href="/dashboard" style="color: white; text-decoration: none;">← Back to Menu</a>
+    <a href="/dashboard" style="color: white; text-decoration: none; font-size: 14px;">← Back to Menu</a>
 </div>
 
 <div class="container">
@@ -52,19 +52,21 @@
 
         <div class="panel">
             <h3>Current Cart</h3>
-            <div id="cartItems" style="margin: 1rem 0;"></div>
+            <div id="cartItems" style="margin: 1rem 0; min-height: 50px;">
+                <p style="color: #9ca3af; text-align: center;">Cart is empty</p>
+            </div>
             <hr>
             <div style="margin-top: 1rem;">
-                <div style="display:flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem;">
+                <div style="display:flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">
                     <span>Total</span><span id="totalDisplay">₱0.00</span>
                 </div>
-                <input type="text" id="customerName" placeholder="Customer Name" style="width:100%; padding:8px; margin-top:10px;">
+                <input type="text" id="customerName" placeholder="Customer Name" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
                 <button class="process-btn" onclick="placeOrder()">Process Checkout</button>
             </div>
         </div>
     </div>
 
-    <h3>Recent Orders</h3>
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem;">Recent Orders</h3>
     <table>
         <thead>
             <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr>
@@ -73,11 +75,14 @@
     </table>
 </div>
 
+<!-- Load auth first -->
+<script src="/js/auth.js"></script>
+
 <script>
     let allItems = [];
     let cart = [];
 
-    // This must match the error call from your screenshot exactly
+    // This naming matches your error logs exactly
     window.onload = async () => {
         await fetchItems(); 
         await loadOrders();
@@ -88,7 +93,7 @@
             const res = await fetch('/api/items');
             allItems = await res.json();
             renderItemGrid(allItems);
-        } catch (e) { console.error("Fetch Error:", e); }
+        } catch (e) { console.error("Error loading items:", e); }
     }
 
     function renderItemGrid(items) {
@@ -96,9 +101,9 @@
         grid.innerHTML = items.map(item => `
             <div class="item-card ${item.quantity <= 0 ? 'out-of-stock' : ''}" 
                  onclick="${item.quantity > 0 ? `addToCart(${item.id})` : ''}">
-                <div style="font-weight:600;">${item.name}</div>
-                <div style="color: #4f46e5; font-weight: 700;">₱${item.price.toFixed(2)}</div>
-                <div style="font-size: 12px; color: #6b7280;">Stock: ${item.quantity}</div>
+                <div style="font-weight:600; font-size:14px;">${item.name}</div>
+                <div style="color: #4f46e5; font-weight: 700; margin: 4px 0;">₱${item.price.toFixed(2)}</div>
+                <div style="font-size: 11px; color: #6b7280;">Stock: ${item.quantity}</div>
             </div>
         `).join('');
     }
@@ -107,41 +112,54 @@
         const item = allItems.find(i => i.id === itemId);
         const existing = cart.find(c => c.itemId === itemId);
         
-        // Stock limit check
+        // Stock safety check
         const inCart = existing ? existing.quantity : 0;
         if (inCart + 1 > item.quantity) {
-            alert("Not enough stock!");
+            alert(`Only ${item.quantity} available in stock!`);
             return;
         }
 
-        if (existing) existing.quantity++;
-        else cart.push({ itemId: item.id, itemName: item.name, itemPrice: item.price, quantity: 1 });
-        
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cart.push({ itemId: item.id, itemName: item.name, itemPrice: item.price, quantity: 1 });
+        }
         renderCart();
     }
 
     function renderCart() {
         const div = document.getElementById('cartItems');
-        div.innerHTML = cart.map(c => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span>${c.itemName} (x${c.quantity})</span>
-                <span>₱${(c.itemPrice * c.quantity).toFixed(2)}</span>
-            </div>
-        `).join('');
+        if (cart.length === 0) {
+            div.innerHTML = '<p style="color: #9ca3af; text-align: center;">Cart is empty</p>';
+        } else {
+            div.innerHTML = cart.map(c => `
+                <div class="cart-item">
+                    <span>${c.itemName} (x${c.quantity})</span>
+                    <span style="font-weight:600;">₱${(c.itemPrice * c.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
         const total = cart.reduce((s, c) => s + (c.itemPrice * c.quantity), 0);
         document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2);
     }
 
     async function placeOrder() {
-        const name = document.getElementById('customerName').value;
-        if (!name || cart.length === 0) return alert("Fill in name and items");
+        const name = document.getElementById('customerName').value.trim();
+        if (!name || cart.length === 0) {
+            alert("Please enter customer name and add items to cart.");
+            return;
+        }
 
         const res = await fetch('/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 customerName: name,
-                orderItems: cart.map(c => ({ itemName: c.itemName, itemPrice: c.itemPrice, quantity: c.quantity }))
+                orderItems: cart.map(c => ({
+                    itemName: c.itemName,
+                    itemPrice: c.itemPrice,
+                    quantity: c.quantity
+                }))
             })
         });
 
@@ -151,25 +169,31 @@
             await fetchItems();
             await loadOrders();
             renderCart();
+        } else {
+            alert("Failed to process order.");
         }
     }
 
     async function loadOrders() {
-        const res = await fetch('/api/orders');
-        const orders = await res.json();
-        document.getElementById('totalOrders').textContent = orders.length;
-        const sales = orders.reduce((s, o) => s + o.finalAmount, 0);
-        document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString();
-        
-        document.getElementById('orderTableBody').innerHTML = orders.map(o => `
-            <tr>
-                <td>#${o.orderNumber}</td>
-                <td>${o.customerName}</td>
-                <td>₱${o.finalAmount.toFixed(2)}</td>
-                <td><span class="badge-completed">${o.status}</span></td>
-                <td>${new Date(o.orderDate).toLocaleDateString()}</td>
-            </tr>
-        `).join('');
+        try {
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            
+            // Dashboard updates
+            document.getElementById('totalOrders').textContent = orders.length;
+            const sales = orders.filter(o => o.status === 'COMPLETED').reduce((s, o) => s + o.finalAmount, 0);
+            document.getElementById('totalSales').textContent = '₱' + sales.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            document.getElementById('orderTableBody').innerHTML = orders.slice(0, 10).map(o => `
+                <tr>
+                    <td style="font-weight:bold;">#${o.orderNumber}</td>
+                    <td>${o.customerName}</td>
+                    <td style="font-weight:600;">₱${o.finalAmount.toFixed(2)}</td>
+                    <td><span class="badge">${o.status}</span></td>
+                    <td>${new Date(o.orderDate).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error("Error loading orders:", e); }
     }
 </script>
 </body>
