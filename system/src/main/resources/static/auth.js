@@ -16,13 +16,19 @@ function getCurrentUser() {
     return parseJwt(token);
 }
 
-// Get role from token
+// Get role from token — strips ROLE_ prefix if present
 function getUserRole() {
     const user = getCurrentUser();
     if (!user) return null;
-    // Spring Security prefixes roles with ROLE_
-    const role = user.role || '';
-    return role.replace('ROLE_', '');
+
+    // Check both 'role' and 'roles' claim
+    let role = user.role || user.roles || user.authorities || '';
+
+    // If it's an array, take first element
+    if (Array.isArray(role)) role = role[0];
+
+    // Strip ROLE_ prefix
+    return role.toString().replace('ROLE_', '').toUpperCase().trim();
 }
 
 // Check if user is logged in
@@ -39,8 +45,11 @@ function requireLogin() {
 function requireRole(allowedRoles) {
     if (!requireLogin()) return false;
     const role = getUserRole();
+    console.log('Current role:', role);
+    console.log('Allowed roles:', allowedRoles);
     if (!allowedRoles.includes(role)) {
-        alert('Access Denied! You do not have permission to view this page.');
+        alert('Access Denied! Your role (' + role +
+              ') cannot access this page.');
         window.location.href = '/dashboard';
         return false;
     }

@@ -51,7 +51,6 @@ public class ItemService {
     public List<Item> searchItems(String name) {
         return itemRepository.findByNameContainingIgnoreCase(name);
     }
-    
  // Deduct stock quantity
     public void deductStock(Long itemId, int quantity) {
         Item item = getItemById(itemId);
@@ -71,5 +70,4 @@ public class ItemService {
         Item item = getItemById(itemId);
         return item.getQuantity() >= quantity;
     }
-    
 }

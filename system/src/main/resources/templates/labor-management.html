@@ -159,10 +159,7 @@
 
 <div class="navbar">
     <h1>Labor Management</h1>
-    <div style="display:flex;align-items:center;gap:1rem;">
-        <span id="nav-user" style="font-size:13px;opacity:0.85"></span>
-        <a href="/dashboard" class="back-btn">← Back to Menu</a>
-    </div>
+    <a href="/dashboard" class="back-btn">← Back to Menu</a>
 </div>
 
 <div class="container">
@@ -294,19 +291,6 @@
         </div>
     </div>
 </div>
-
-<script src="/js/auth.js"></script>
-<script>
-    // Only ADMIN can access
-    requireRole(['ADMIN']);
-
-    // Show current user in navbar
-    const user = getCurrentUser();
-    if (user) {
-        document.getElementById('nav-user').textContent =
-            user.sub + ' (' + getUserRole() + ')';
-    }
-</script>
 
 <script>
     const token = localStorage.getItem('token');

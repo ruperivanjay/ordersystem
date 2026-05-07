@@ -1,62 +1,101 @@
-package com.example.demo.controller;
+package com.ordering.system.controller;
 
-import com.example.demo.model.Order;
-import com.example.demo.model.Product;
-import com.example.demo.repository.OrderRepository;
-import com.example.demo.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ordering.system.entity.Order;
+import com.ordering.system.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@RestController
-@RequestMapping("/api")
+@Controller
 public class OrderController {
 
-    @Autowired
-    private ProductRepository productRepository;
+    private final OrderService orderService;
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    /**
-     * Retrieves all products to populate the 'Select Items' grid.
-     */
-    @GetMapping("/products")
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
-    /**
-     * Retrieves all orders for the 'Recent Orders' table.
-     */
-    @GetMapping("/orders")
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    // Thymeleaf page
+    @GetMapping("/ordering-system")
+    public String orderingSystemPage() {
+        return "ordering-system";
     }
 
-    /**
-     * Saves a new order coming from the checkout form.
-     */
-    @PostMapping("/orders")
-    public ResponseEntity<Order> placeOrder(@RequestBody Order order) {
+    // REST - Get all orders
+    @GetMapping("/api/orders")
+    @ResponseBody
+    public ResponseEntity<List<Order>> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
+    // REST - Get order by ID
+    @GetMapping("/api/orders/{id}")
+    @ResponseBody
+    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.getOrderById(id));
+    }
+
+    // REST - Create order (with stock deduction)
+    @PostMapping("/api/orders")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> createOrder(
+            @RequestBody Order order) {
+        Map<String, Object> response = new HashMap<>();
         try {
-            Order savedOrder = orderRepository.save(order);
-            return ResponseEntity.ok(savedOrder);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            Order created = orderService.createOrder(order);
+            response.put("success", true);
+            response.put("orderNumber", created.getOrderNumber());
+            response.put("id", created.getId());
+            response.put("finalAmount", created.getFinalAmount());
+            response.put("status", created.getStatus());
+            response.put("paymentStatus", created.getPaymentStatus());
+            response.put("customerName", created.getCustomerName());
+            response.put("orderDate", created.getOrderDate().toString());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
-    /**
-     * Simple status update for the 'Done' button in your table.
-     */
-    @PutMapping("/orders/{id}/status")
-    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long id, @RequestBody Order statusUpdate) {
-        return orderRepository.findById(id).map(order -> {
-            order.setStatus(statusUpdate.getStatus());
-            return ResponseEntity.ok(orderRepository.save(order));
-        }).orElse(ResponseEntity.notFound().build());
+    // REST - Update order status
+    @PutMapping("/api/orders/{id}/status")
+    @ResponseBody
+    public ResponseEntity<Order> updateStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(
+            orderService.updateStatus(id, body.get("status")));
+    }
+
+    // REST - Update payment status
+    @PutMapping("/api/orders/{id}/payment")
+    @ResponseBody
+    public ResponseEntity<Order> updatePayment(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(
+            orderService.updatePaymentStatus(id, body.get("paymentStatus")));
+    }
+
+    // REST - Delete order
+    @DeleteMapping("/api/orders/{id}")
+    @ResponseBody
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // REST - Search by customer
+    @GetMapping("/api/orders/search")
+    @ResponseBody
+    public ResponseEntity<List<Order>> searchOrders(
+            @RequestParam String name) {
+        return ResponseEntity.ok(orderService.searchByCustomer(name));
     }
 }

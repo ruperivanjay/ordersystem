@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,13 +42,14 @@ public class UserController {
     @ResponseBody
     public ResponseEntity<Map<String, String>> register(
             @RequestBody RegisterRequest request) {
+        Map<String, String> response = new HashMap<>();
         try {
             authService.register(request);
-            return ResponseEntity.ok(
-                Map.of("message", "User registered successfully!"));
+            response.put("message", "User registered successfully!");
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("message", e.getMessage()));
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -65,11 +67,18 @@ public class UserController {
     public ResponseEntity<Map<String, String>> updateRole(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setRole(body.get("role"));
-        userRepository.save(user);
-        return ResponseEntity.ok(Map.of("message", "Role updated successfully!"));
+        Map<String, String> response = new HashMap<>();
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            user.setRole(body.get("role"));
+            userRepository.save(user);
+            response.put("message", "Role updated successfully!");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     // REST - Change password
@@ -78,13 +87,20 @@ public class UserController {
     public ResponseEntity<Map<String, String>> changePassword(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
+        Map<String, String> response = new HashMap<>();
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+                encoder =
                 new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        user.setPassword(encoder.encode(body.get("password")));
-        userRepository.save(user);
-        return ResponseEntity.ok(
-            Map.of("message", "Password changed successfully!"));
+            user.setPassword(encoder.encode(body.get("password")));
+            userRepository.save(user);
+            response.put("message", "Password changed successfully!");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }

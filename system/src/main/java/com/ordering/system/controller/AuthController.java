@@ -2,25 +2,26 @@ package com.ordering.system.controller;
 
 import com.ordering.system.dto.LoginRequest;
 import com.ordering.system.dto.LoginResponse;
+import com.ordering.system.dto.RegisterRequest;
 import com.ordering.system.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
+
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService; // ← this was missing!
+    private final AuthService authService;
 
-    // Thymeleaf login page
     @GetMapping("/login")
     public String loginPage() {
         return "login";
     }
 
-    // REST API endpoint for login
     @PostMapping("/api/auth/login")
     @ResponseBody
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
@@ -29,6 +30,17 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).build();
+        }
+    }
+
+    @PostMapping("/api/auth/register")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
+        try {
+            authService.register(request);
+            return ResponseEntity.ok(Map.of("message", "Account created successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

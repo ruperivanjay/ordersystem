@@ -1,5 +1,6 @@
 package com.ordering.system.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,12 +16,14 @@ public class Order {
     @Column(nullable = false, unique = true)
     private String orderNumber;
 
+    @JsonProperty("customerName")
     @Column(nullable = false)
     private String customerName;
 
     @Column(nullable = false)
     private String status; // PENDING, CONFIRMED, COMPLETED, CANCELLED
 
+    @JsonProperty("paymentMethod")
     @Column(nullable = false)
     private String paymentMethod; // Cash, Card, E-Wallet
 
@@ -30,6 +33,7 @@ public class Order {
     @Column(nullable = false)
     private Double totalAmount;
 
+    @JsonProperty("discount")
     @Column(nullable = false)
     private Double discount;
 
@@ -39,6 +43,7 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderDate;
 
+    @JsonProperty("orderItems")
     @OneToMany(mappedBy = "order",
                cascade = CascadeType.ALL,
                fetch = FetchType.EAGER)

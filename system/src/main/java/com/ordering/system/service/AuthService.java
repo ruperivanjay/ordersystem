@@ -2,13 +2,13 @@ package com.ordering.system.service;
 
 import com.ordering.system.dto.LoginRequest;
 import com.ordering.system.dto.LoginResponse;
+import com.ordering.system.dto.RegisterRequest;
 import com.ordering.system.entity.User;
 import com.ordering.system.repository.UserRepository;
 import com.ordering.system.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.ordering.system.dto.RegisterRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -29,18 +29,15 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return new LoginResponse(token, user.getUsername(), user.getRole());
     }
-    
-    public void register(RegisterRequest request) {
-        // Check if username already exists
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists!");
-        }
 
+    public void register(RegisterRequest request) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
+        user.setRole(request.getRole() != null ? request.getRole() : "STAFF");
         userRepository.save(user);
     }
-    
 }

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Reports & Receipts</title>
     <style>
-        /* Styles remain unchanged */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; background: #f4f4f4; min-height: 100vh; }
 
@@ -39,8 +38,12 @@
         .card-value.blue   { color: #2563eb; }
         .card-value.amber  { color: #d97706; }
         .card-value.red    { color: #dc2626; }
-        .card-sub { font-size: 12px; color: #6b7280; margin-top: 0.4rem; }
+        .card-sub {
+            font-size: 12px; color: #6b7280;
+            margin-top: 0.4rem;
+        }
 
+        /* Filter bar */
         .filter-bar {
             background: white; border-radius: 10px;
             padding: 1rem 1.2rem; margin-bottom: 1.2rem;
@@ -65,6 +68,7 @@
             border-radius: 6px; cursor: pointer; font-size: 13px;
         }
 
+        /* Table */
         table {
             width: 100%; background: white;
             border-radius: 10px; border-collapse: collapse;
@@ -101,8 +105,12 @@
         }
         .receipt-btn:hover { background: #dbeafe; }
 
-        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; font-size: 14px; }
+        .empty-state {
+            text-align: center; padding: 3rem;
+            color: #9ca3af; font-size: 14px;
+        }
 
+        /* Table footer total */
         .table-footer {
             background: white; border-radius: 0 0 10px 10px;
             padding: 0.8rem 1rem;
@@ -124,14 +132,11 @@
 
 <div class="navbar">
     <h1>Reports & Receipts</h1>
-    <div style="display:flex;align-items:center;gap:1rem;">
-        <!-- User Info Display -->
-        <span id="nav-user" style="font-size:13px;opacity:0.85"></span>
-        <a href="/dashboard" class="back-btn">← Back to Menu</a>
-    </div>
+    <a href="/dashboard" class="back-btn">← Back to Menu</a>
 </div>
 
 <div class="container">
+
     <div id="message"></div>
 
     <!-- Summary Cards -->
@@ -187,20 +192,10 @@
         Filtered Total: &nbsp;
         <span id="filteredTotal" style="color:#16a34a">₱0.00</span>
     </div>
+
 </div>
 
-<script src="/js/auth.js"></script>
 <script>
-    // 1. Security & Identity Check
-    requireRole(['ADMIN', 'CASHIER']);
-    
-    const user = getCurrentUser();
-    if (user) {
-        document.getElementById('nav-user').textContent = 
-            user.sub + ' (' + getUserRole() + ')';
-    }
-
-    // 2. Fetching & Business Logic
     const token = localStorage.getItem('token');
     if (!token) window.location.href = '/login';
 
@@ -210,40 +205,43 @@
     };
 
     async function loadSummary() {
-        try {
-            const res = await fetch('/api/reports/summary');
-            const s = await res.json();
-            document.getElementById('totalSales').textContent = '₱' + s.totalSales.toFixed(2);
-            document.getElementById('totalOrders').textContent = s.totalOrders;
-            document.getElementById('unpaidCount').textContent = s.unpaid;
-            document.getElementById('completedCount').textContent = s.completed + ' completed orders';
-            document.getElementById('pendingCount').textContent = s.pending + ' pending';
-            document.getElementById('cancelledCount').textContent = s.cancelled + ' cancelled';
-        } catch (e) { console.error("Summary error", e); }
+        const res = await fetch('/api/reports/summary');
+        const s = await res.json();
+        document.getElementById('totalSales').textContent =
+            '₱' + s.totalSales.toFixed(2);
+        document.getElementById('totalOrders').textContent = s.totalOrders;
+        document.getElementById('unpaidCount').textContent = s.unpaid;
+        document.getElementById('completedCount').textContent =
+            s.completed + ' completed orders';
+        document.getElementById('pendingCount').textContent =
+            s.pending + ' pending';
+        document.getElementById('cancelledCount').textContent =
+            s.cancelled + ' cancelled';
     }
 
     async function loadOrders(from = '', to = '') {
         let url = '/api/reports/orders';
         if (from && to) url += `?from=${from}&to=${to}`;
-        try {
-            const res = await fetch(url);
-            const orders = await res.json();
-            renderTable(orders);
-        } catch (e) { console.error("Orders error", e); }
+        const res = await fetch(url);
+        const orders = await res.json();
+        renderTable(orders);
     }
 
     function renderTable(orders) {
         const tbody = document.getElementById('reportTableBody');
         if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No orders found.</td></tr>';
+            tbody.innerHTML =
+                '<tr><td colspan="10" class="empty-state">No orders found.</td></tr>';
             document.getElementById('filteredTotal').textContent = '₱0.00';
             return;
         }
 
+        // Compute filtered total (completed only)
         const filteredTotal = orders
             .filter(o => o.status === 'COMPLETED')
             .reduce((s, o) => s + o.finalAmount, 0);
-        document.getElementById('filteredTotal').textContent = '₱' + filteredTotal.toFixed(2);
+        document.getElementById('filteredTotal').textContent =
+            '₱' + filteredTotal.toFixed(2);
 
         tbody.innerHTML = orders.map((o, i) => `
             <tr>
@@ -254,12 +252,25 @@
                 <td>₱${o.discount.toFixed(2)}</td>
                 <td>₱${o.finalAmount.toFixed(2)}</td>
                 <td>
-                    <span class="badge badge-${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
+                    <span class="badge badge-${o.paymentStatus.toLowerCase()}">
+                        ${o.paymentStatus}
+                    </span>
                     <br/><small style="color:#6b7280">${o.paymentMethod}</small>
                 </td>
-                <td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td>
-                <td style="font-size:12px;color:#6b7280">${new Date(o.orderDate).toLocaleString()}</td>
-                <td><a class="receipt-btn" href="/receipt/${o.id}" target="_blank">Print</a></td>
+                <td>
+                    <span class="badge badge-${o.status.toLowerCase()}">
+                        ${o.status}
+                    </span>
+                </td>
+                <td style="font-size:12px;color:#6b7280">
+                    ${new Date(o.orderDate).toLocaleString()}
+                </td>
+                <td>
+                    <a class="receipt-btn"
+                       href="/receipt/${o.id}" target="_blank">
+                       Print
+                    </a>
+                </td>
             </tr>
         `).join('');
     }
@@ -287,5 +298,6 @@
         setTimeout(() => { msg.className = ''; msg.textContent = ''; }, 3000);
     }
 </script>
+
 </body>
 </html>

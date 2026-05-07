@@ -136,11 +136,7 @@
 <!-- Navbar -->
 <div class="navbar">
     <h1>Item Management</h1>
-    <!-- Grouped User Info and Back Button -->
-    <div style="display:flex;align-items:center;gap:1rem;">
-        <span id="nav-user" style="font-size:13px;opacity:0.85"></span>
-        <a href="/dashboard" class="back-btn">← Back to Menu</a>
-    </div>
+    <a href="/dashboard" class="back-btn">← Back to Menu</a>
 </div>
 
 <div class="container">
@@ -211,23 +207,6 @@
     </div>
 </div>
 
-<script src="/js/auth.js"></script>
-<script>
-    // Only ADMIN and CASHIER can access
-    if (typeof requireRole === 'function') {
-        requireRole(['ADMIN', 'CASHIER']);
-    }
-
-    // Show current user in navbar
-    if (typeof getCurrentUser === 'function') {
-        const user = getCurrentUser();
-        if (user) {
-            document.getElementById('nav-user').textContent = 
-                user.sub + ' (' + getUserRole() + ')';
-        }
-    }
-</script>
-
 <script>
     // Check token
     const token = localStorage.getItem('token');
@@ -237,13 +216,9 @@
     window.onload = () => loadItems();
 
     async function loadItems() {
-        try {
-            const res = await fetch('/api/items');
-            const items = await res.json();
-            renderTable(items);
-        } catch (err) {
-            console.error("Error loading items:", err);
-        }
+        const res = await fetch('/api/items');
+        const items = await res.json();
+        renderTable(items);
     }
 
     async function searchItems() {
