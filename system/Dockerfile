@@ -1,15 +1,19 @@
-# Stage 1: Build the application using Java 17
+# Stage 1: Build
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-# Copy the pom.xml and source code
+
+# Copy everything from the current directory (which is /system) to /app
 COPY . .
-# Build the jar
+
+# List files just to be sure (this will show in your logs if it fails again)
+RUN ls -l
+
+# Build the application
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run the application using Java 17 JRE (smaller and more secure)
+# Stage 2: Run
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-# Copy the built jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
